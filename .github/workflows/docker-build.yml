@@ -51,5 +51,5 @@ jobs:
       - name: build the container image
         run: docker build -t ${{ inputs.docker_username }}/${{ inputs.image_name }}:${{ github.sha }} --build-arg BUILD_ARGS=${{ inputs.build_args }} -f ${{ inputs.build_file_path }} ${{ inputs.build_context }}
         shell: bash
-        push: true
+      
 

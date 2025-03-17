@@ -15,6 +15,14 @@ on:
         description: 'Build context directory'
         default: '.'
         type: string
+      docker_username:
+        description: "Docker Hub username"
+        required: true
+        type: string
+      image_name:
+        description: "Docker image name"
+        required: true
+        type: string
     secrets:
       DOCKER_USERNAME:
         description: 'Docker Hub username'
@@ -39,20 +47,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            docker.io/${{ secrets.DOCKER_USERNAME }}/my-image
+      - name: Get Git Tag or SHA
+        id: vars
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG=${GITHUB_REF#refs/tags/}
+          else
+            TAG=${GITHUB_SHA::7}
+          fi
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v4
         with:
-          context: ${{ inputs.build_context }}
-          file: ${{ inputs.build_file_path }}
-          build-args: |
-            ${{ inputs.build_args }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          context: .
+          file: ./Dockerfile
+          tags: |
+            ${{ inputs.docker_username }}/${{ inputs.image_name }}:${{ env.IMAGE_TAG }}
+            ${{ inputs.docker_username }}/${{ inputs.image_name }}:latest
           push: true

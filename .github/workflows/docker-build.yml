@@ -48,8 +48,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: build the container image
-        run: docker build -t ${{ inputs.docker_username }}/${{ inputs.image_name }}:${{ github.sha }} --build-arg BUILD_ARGS=${{ inputs.build_args }} -f ${{ inputs.build_file_path }} ${{ inputs.build_context }}
-        shell: bash
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: |
+            ${{ inputs.docker_username }}/${{ inputs.image_name }}:${{ env.IMAGE_TAG }}
+            ${{ inputs.docker_username }}/${{ inputs.image_name }}:latest
+          push: true
+      
       
 

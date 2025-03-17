@@ -1,0 +1,48 @@
+name: Perform Formatting and Linting
+run-name: ${{ github.actor }} -  Perform Linting and Formatting
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+        default: "18"
+
+jobs:
+  linting-and-formatting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Ruff Format & Lint
+        id: ruff
+        uses: chartboost/ruff-action@v1
+        with:
+          args: 'format'
+      
+      - name: Capture output
+        run: |
+          echo "${{ steps.ruff.outputs.stdout }}" > ruff_output.txt || true
+
+      - name: Upload Ruff Format & Lint Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruff-format-lint-results
+          path: ruff_output.txt
+
+      - name: Check for Terraform files
+        id: check_tf
+        run: |
+          if ls *.tf &> /dev/null; then
+            echo "tf_exists=true" >> $GITHUB_ENV
+          else
+            echo "tf_exists=false" >> $GITHUB_ENV
+          fi
+      
+      - name: Terraform Format
+        if: env.tf_exists == 'true'
+        run: terraform fmt -check -diff
+            
